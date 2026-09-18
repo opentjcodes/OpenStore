@@ -75,7 +75,7 @@
                 radial-gradient(circle at 50% 110%, var(--theme-color-dim), transparent 60%);
             color: #e2e8f0;
             overflow-x: hidden;
-            touch-action: pan-y; /* Allow vertical scroll, prevent zoom */
+            touch-action: pan-y;
             transition: background-color 1.5s cubic-bezier(0.4, 0, 0.2, 1), background-image 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -100,7 +100,6 @@
             vertical-align: middle;
         }
         #cursor-1 { height: 0.85em; }
-        #cursor-2 { height: 1em; background-color: #8b949e; }
         @keyframes blink { 50% { opacity: 0; } }
 
         /* Premium Text Gradients */
@@ -165,14 +164,14 @@
             height: 14px;
         }
 
-        /* Smooth Sheet Transition */
+        /* Smooth Sheet Transition & Ambient Background */
         #fullscreen-player {
-            background-color: rgba(0, 0, 0, 0.3);
+            background: radial-gradient(circle at 50% 40%, var(--theme-color-light) 0%, var(--app-bg) 80%);
             backdrop-filter: blur(80px);
             -webkit-backdrop-filter: blur(80px);
-            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease;
-            will-change: transform, opacity;
-            touch-action: none; /* Prevents native browser swipe-back/refresh */
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease, background 1.5s ease;
+            will-change: transform, opacity, background;
+            touch-action: none;
         }
         #fullscreen-player.closed {
             transform: translateY(100%);
@@ -215,8 +214,8 @@
 
         /* Ambient Cover Glow */
         #full-cover-wrapper {
-            box-shadow: 0 20px 80px -10px var(--theme-color-glow);
-            transition: box-shadow 1.5s ease;
+            box-shadow: 0 20px 100px -10px var(--theme-color-glow);
+            transition: box-shadow 1.5s ease, transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
         }
     </style>
 </head>
@@ -227,16 +226,19 @@
         <div class="text-gradient font-extrabold text-6xl md:text-8xl tracking-tighter leading-none flex items-center">
             <span id="typewriter-text-1"></span><span class="cursor" id="cursor-1"></span>
         </div>
-        <div class="text-metal-400 font-bold text-sm md:text-base tracking-[0.4em] uppercase mt-6 flex items-center h-6">
-            <span id="typewriter-text-2"></span><span class="cursor hidden" id="cursor-2"></span>
+        
+        <!-- Fading Quote -->
+        <div id="quote-container" class="opacity-0 transition-opacity duration-1000 text-metal-400 text-sm md:text-base font-medium text-center max-w-md px-6 mt-10 italic leading-relaxed">
+            "Music is a powerful art form that speaks to us when words are not enough."
         </div>
+
         <div id="loading-msg" class="opacity-0 transition-opacity duration-1000 text-[10px] font-bold text-metal-400 mt-10 tracking-[0.2em] uppercase">
             Connecting to OpenStore...
         </div>
     </div>
 
-    <!-- Global Audio Element -->
-    <audio id="audio-engine" preload="auto" crossorigin="anonymous"></audio>
+    <!-- Global Audio Element (playsinline ensures background play on mobile) -->
+    <audio id="audio-engine" preload="auto" crossorigin="anonymous" playsinline></audio>
 
     <!-- Floating Notifications -->
     <div id="toast-box" class="fixed top-24 right-6 z-[120] flex flex-col gap-3 pointer-events-none"></div>
@@ -246,9 +248,6 @@
         <div class="cursor-pointer group flex flex-col justify-center" onclick="showCatalogView()">
             <span class="font-extrabold text-xl md:text-2xl text-gradient tracking-tight leading-none">
                 OPENSTORE
-            </span>
-            <span class="text-[9px] font-bold tracking-[0.3em] text-metal-400 uppercase mt-1">
-                Curated by TJ
             </span>
         </div>
     </header>
@@ -330,10 +329,10 @@
                 </div>
             </div>
 
-            <!-- Ultra Minimalist Controls (Play/Pause Only) -->
-            <div class="flex items-center justify-center px-4 pb-8">
-                <button onclick="togglePlayPause()" id="full-play-btn" class="w-24 h-24 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform" style="box-shadow: 0 0 40px var(--theme-color-light);">
-                    <i class="fa-solid fa-play text-3xl ml-2" id="full-play-icon"></i>
+            <!-- Ultra Minimalist Controls (Themed, Flat, No Sharp Edges) -->
+            <div class="flex items-center justify-center px-4 pb-10">
+                <button onclick="togglePlayPause()" id="full-play-btn" class="w-20 h-20 rounded-full flex items-center justify-center active:scale-95 transition-all duration-300" style="background-color: var(--theme-color); color: #030304;">
+                    <i class="fa-solid fa-play text-2xl ml-1.5" id="full-play-icon"></i>
                 </button>
             </div>
         </div>
@@ -360,12 +359,44 @@
         let currentTrackIndex = -1;
         let activeTrack = null;
         let currentPlaySession = 0; 
+        
+        // Memory Cache for resuming playback
+        const trackProgressCache = new Map();
 
-        const audioCache = new Map();
         const audio = document.getElementById('audio-engine');
         audio.loop = false; 
         const fullProgress = document.getElementById('full-progress');
         
+        // ==========================================
+        // INDEXED-DB CACHING (FIREBASE SPARK OPTIMIZATION)
+        // ==========================================
+        const initDB = () => new Promise((resolve, reject) => {
+            const req = indexedDB.open("OpenStoreAudioCache", 1);
+            req.onupgradeneeded = (e) => e.target.result.createObjectStore("tracks");
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+
+        const getCachedTrack = async (id) => {
+            try {
+                const db = await initDB();
+                return new Promise(resolve => {
+                    const tx = db.transaction("tracks", "readonly");
+                    const req = tx.objectStore("tracks").get(id);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => resolve(null);
+                });
+            } catch (e) { return null; }
+        };
+
+        const cacheTrack = async (id, blob) => {
+            try {
+                const db = await initDB();
+                const tx = db.transaction("tracks", "readwrite");
+                tx.objectStore("tracks").put(blob, id);
+            } catch (e) { console.warn("Caching failed", e); }
+        };
+
         // ==========================================
         // AUTO-FULLSCREEN HELPER
         // ==========================================
@@ -378,7 +409,7 @@
         }
 
         // ==========================================
-        // DOLBY ATMOS / SPATIAL AUDIO ENGINE
+        // DOLBY ATMOS / SPATIAL AUDIO ENGINE (Optimized)
         // ==========================================
         let audioCtx, trackSource;
         let audioInitialized = false;
@@ -406,26 +437,23 @@
                 highShelf.frequency.value = 10000;
                 highShelf.gain.value = 3.5; 
 
-                const splitter = audioCtx.createChannelSplitter(2);
-                const merger = audioCtx.createChannelMerger(2);
-                const delay = audioCtx.createDelay();
-                delay.delayTime.value = 0.015; 
-
                 trackSource.connect(compressor);
                 compressor.connect(lowShelf);
                 lowShelf.connect(highShelf);
+                highShelf.connect(audioCtx.destination);
                 
-                highShelf.connect(splitter);
-                splitter.connect(merger, 0, 0); 
-                splitter.connect(delay, 1);     
-                delay.connect(merger, 0, 1);    
-
-                merger.connect(audioCtx.destination);
                 audioInitialized = true;
             } catch (e) {
                 console.warn("Spatial Audio API not supported.", e);
             }
         }
+
+        // Keep AudioContext alive in background
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible" && !audio.paused && audioCtx && audioCtx.state === "suspended") {
+                audioCtx.resume();
+            }
+        });
 
         window.toast = (message, type = "info") => {
             const container = document.getElementById('toast-box');
@@ -463,7 +491,6 @@
                     }
                     const count = data.length / 4;
                     
-                    // Heavy saturation boost for premium ambient glow
                     const boost = 2.2; 
                     const finalR = Math.min(255, Math.floor((r / count) * boost));
                     const finalG = Math.min(255, Math.floor((g / count) * boost));
@@ -472,7 +499,7 @@
                     document.documentElement.style.setProperty('--theme-color', `rgb(${finalR}, ${finalG}, ${finalB})`);
                     document.documentElement.style.setProperty('--theme-color-dim', `rgba(${finalR}, ${finalG}, ${finalB}, 0.15)`);
                     document.documentElement.style.setProperty('--theme-color-light', `rgba(${finalR}, ${finalG}, ${finalB}, 0.3)`);
-                    document.documentElement.style.setProperty('--theme-color-glow', `rgba(${finalR}, ${finalG}, ${finalB}, 0.4)`);
+                    document.documentElement.style.setProperty('--theme-color-glow', `rgba(${finalR}, ${finalG}, ${finalB}, 0.5)`);
                     document.documentElement.style.setProperty('--app-bg', `rgb(${Math.floor(finalR * 0.05)}, ${Math.floor(finalG * 0.05)}, ${Math.floor(finalB * 0.05)})`);
                 } catch(e) {
                     resetTheme();
@@ -491,13 +518,14 @@
         }
 
         // ==========================================
-        // REELS-STYLE GESTURES (PERFECTED)
+        // REELS-STYLE GESTURES (HYPER-SENSITIVE)
         // ==========================================
         const playerEl = document.getElementById('fullscreen-player');
         const coverWrapper = document.getElementById('full-cover-wrapper');
         const swipeArea = document.getElementById('swipe-area');
         
         let startX = 0, startY = 0, currentX = 0, currentY = 0;
+        let touchStartTime = 0;
         let isDragging = false;
         let isSwipingRight = false;
         let isSwipingVertical = false;
@@ -508,6 +536,7 @@
             startY = e.touches[0].clientY; 
             currentX = startX;
             currentY = startY;
+            touchStartTime = Date.now();
             isDragging = true;
             isSwipingRight = false;
             isSwipingVertical = false;
@@ -524,7 +553,6 @@
             const diffX = currentX - startX;
             const diffY = currentY - startY;
 
-            // Determine swipe direction lock
             if (!isSwipingRight && !isSwipingVertical) {
                 if (Math.abs(diffX) > Math.abs(diffY) && diffX > 0) {
                     isSwipingRight = true;
@@ -534,13 +562,13 @@
             }
 
             if (isSwipingRight) {
-                // 1:1 Finger tracking for swipe right to close
                 if (diffX > 0) {
-                    playerEl.style.transform = `translateX(${diffX}px)`;
-                    playerEl.style.opacity = 1 - (diffX / window.innerWidth);
+                    const progress = diffX / window.innerWidth;
+                    // Add slight scale down for natural feel
+                    playerEl.style.transform = `translateX(${diffX}px) scale(${1 - progress * 0.05})`;
+                    playerEl.style.opacity = 1 - progress;
                 }
             } else if (isSwipingVertical) {
-                // Reels style vertical drag
                 coverWrapper.style.transform = `translateY(${diffY * 0.6}px) scale(0.95)`;
             }
         }, {passive: true});
@@ -551,33 +579,35 @@
             
             const diffX = currentX - startX;
             const diffY = currentY - startY;
+            const timeDiff = Date.now() - touchStartTime;
+            const velocityX = Math.abs(diffX) / timeDiff;
+            const velocityY = Math.abs(diffY) / timeDiff;
 
             if (isSwipingRight) {
-                if (diffX > 120) {
-                    // Complete the close animation
-                    playerEl.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-                    playerEl.style.transform = `translateX(100vw)`;
+                // Lowered threshold and added velocity check for effortless closing
+                if (diffX > 60 || velocityX > 0.5) {
+                    playerEl.style.transition = 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease';
+                    playerEl.style.transform = `translateX(100vw) scale(0.95)`;
                     playerEl.style.opacity = '0';
                     setTimeout(() => {
                         closeFullscreenPlayer();
                         playerEl.style.transform = '';
                         playerEl.style.opacity = '';
-                    }, 300);
+                    }, 400);
                 } else {
-                    // Snap back
-                    playerEl.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    playerEl.style.transition = 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease';
                     playerEl.style.transform = '';
                     playerEl.style.opacity = '';
                 }
             } else if (isSwipingVertical) {
                 playerEl.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease';
                 
-                if (diffY < -80) {
+                // Lowered threshold and added velocity check for effortless skipping
+                if (diffY < -40 || (diffY < 0 && velocityY > 0.4)) {
                     playNextTrack(true);
-                } else if (diffY > 80) {
+                } else if (diffY > 40 || (diffY > 0 && velocityY > 0.4)) {
                     playPrevTrack(true);
                 } else {
-                    // Snap back cover
                     coverWrapper.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1)';
                     coverWrapper.style.transform = audio.paused ? 'scale(0.92)' : 'scale(1)';
                 }
@@ -589,9 +619,8 @@
         // ==========================================
         async function playLoaderAnimation() {
             const el1 = document.getElementById('typewriter-text-1');
-            const el2 = document.getElementById('typewriter-text-2');
             const c1 = document.getElementById('cursor-1');
-            const c2 = document.getElementById('cursor-2');
+            const quote = document.getElementById('quote-container');
 
             const typeText = async (text, el, delay) => {
                 for (let char of text) {
@@ -607,10 +636,10 @@
             await new Promise(r => setTimeout(r, 200));
             
             c1.classList.add('hidden');
-            c2.classList.remove('hidden');
             
-            await typeText("CURATED BY TJ.", el2, 60);
-            await new Promise(r => setTimeout(r, 200)); 
+            // Fade in the quote
+            quote.classList.remove('opacity-0');
+            await new Promise(r => setTimeout(r, 1500)); 
 
             document.getElementById('loading-msg').classList.remove('opacity-0');
             await new Promise(r => setTimeout(r, 800)); 
@@ -710,11 +739,22 @@
         }
 
         // ==========================================
-        // HIGH-PERFORMANCE STREAMING ENGINE
+        // HIGH-PERFORMANCE STREAMING ENGINE (Optimized)
         // ==========================================
         window.playTrack = async (index, forceReplay = false) => {
             if (index < 0 || index >= allTracks.length) return;
             
+            // Save progress of current track before switching
+            if (activeTrack && currentTrackIndex !== index) {
+                const timeLeft = audio.duration - audio.currentTime;
+                // If more than 5 seconds left and we played past 2 seconds, save it. Otherwise reset.
+                if (timeLeft > 5 && audio.currentTime > 2) {
+                    trackProgressCache.set(activeTrack.id, audio.currentTime);
+                } else {
+                    trackProgressCache.set(activeTrack.id, 0);
+                }
+            }
+
             if (!forceReplay && currentTrackIndex === index && activeTrack) {
                 if (audio.ended) {
                     audio.currentTime = 0;
@@ -739,12 +779,31 @@
             updatePlayerDisplays(activeTrack);
             updateMediaSession(activeTrack);
 
+            const playAudioBlob = async (blob) => {
+                audio.src = URL.createObjectURL(blob);
+                
+                // Wait for metadata to set the saved resume time
+                await new Promise(resolve => {
+                    audio.onloadedmetadata = () => {
+                        const savedTime = trackProgressCache.get(activeTrack.id) || 0;
+                        audio.currentTime = savedTime;
+                        resolve();
+                    };
+                });
+
+                if (currentPlaySession !== sessionId) return;
+                await audio.play();
+                setPlaybackState(true);
+            };
+
             try {
-                if (audioCache.has(activeTrack.id)) {
-                    audio.src = audioCache.get(activeTrack.id);
+                // 1. Check IndexedDB Cache First (Saves Firebase Reads)
+                let cachedBlob = await getCachedTrack(activeTrack.id);
+                
+                if (cachedBlob) {
+                    await playAudioBlob(cachedBlob);
                 } else {
-                    toast(`Buffering...`);
-                    
+                    // 2. Fetch from Firebase only if not cached
                     const chunkQueries = [];
                     for (let i = 0; i < activeTrack.chunkCount; i++) {
                         chunkQueries.push(getDoc(doc(db, "apps", `${activeTrack.id}_c_${i}`)));
@@ -764,15 +823,12 @@
                     if (currentPlaySession !== sessionId) return; 
 
                     const finalBlob = new Blob(blobs, { type: activeTrack.mimeType || 'audio/mpeg' });
-                    const blobUrl = URL.createObjectURL(finalBlob);
                     
-                    audioCache.set(activeTrack.id, blobUrl);
-                    audio.src = blobUrl;
+                    // Save to IndexedDB for future plays
+                    cacheTrack(activeTrack.id, finalBlob);
+                    
+                    await playAudioBlob(finalBlob);
                 }
-                
-                if (currentPlaySession !== sessionId) return;
-                await audio.play();
-                setPlaybackState(true);
             } catch (err) {
                 if (currentPlaySession === sessionId) {
                     toast("Stream Error", "error");
@@ -826,12 +882,14 @@
 
             if (playing) {
                 miniIcon.className = "fa-solid fa-pause text-base";
-                fullIcon.className = "fa-solid fa-pause text-3xl";
+                fullIcon.className = "fa-solid fa-pause text-2xl";
                 coverWrapper.style.transform = "scale(1)";
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
             } else {
                 miniIcon.className = "fa-solid fa-play text-base ml-0.5";
-                fullIcon.className = "fa-solid fa-play text-3xl ml-2";
+                fullIcon.className = "fa-solid fa-play text-2xl ml-1.5";
                 coverWrapper.style.transform = "scale(0.92)";
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
             }
             updateCatalogUI();
         }
@@ -844,19 +902,14 @@
             const nextIndex = (currentTrackIndex + 1) % allTracks.length;
             
             if (animate) {
-                // 1. Animate current cover UP and OUT
                 coverWrapper.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
                 coverWrapper.style.transform = 'translateY(-100vh) scale(0.8)';
                 
                 setTimeout(() => {
-                    // 2. Change track (updates DOM instantly while hidden)
                     playTrack(nextIndex, true);
-                    
-                    // 3. Instantly move wrapper to BOTTOM
                     coverWrapper.style.transition = 'none';
                     coverWrapper.style.transform = 'translateY(100vh) scale(0.8)';
                     
-                    // 4. Animate wrapper IN (UP to center)
                     requestAnimationFrame(() => {
                         requestAnimationFrame(() => {
                             coverWrapper.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -874,19 +927,14 @@
             const prevIndex = (currentTrackIndex - 1 + allTracks.length) % allTracks.length;
             
             if (animate) {
-                // 1. Animate current cover DOWN and OUT
                 coverWrapper.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
                 coverWrapper.style.transform = 'translateY(100vh) scale(0.8)';
                 
                 setTimeout(() => {
-                    // 2. Change track
                     playTrack(prevIndex, true);
-                    
-                    // 3. Instantly move wrapper to TOP
                     coverWrapper.style.transition = 'none';
                     coverWrapper.style.transform = 'translateY(-100vh) scale(0.8)';
                     
-                    // 4. Animate wrapper IN (DOWN to center)
                     requestAnimationFrame(() => {
                         requestAnimationFrame(() => {
                             coverWrapper.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -937,9 +985,10 @@
             }
         });
 
-        // AUTO-ADVANCE: Instantly triggers the next track and animation
         audio.addEventListener('ended', () => { 
             playCountLogged = false; 
+            // Reset cache for this track since it finished
+            if (activeTrack) trackProgressCache.set(activeTrack.id, 0);
             playNextTrack(true);
         });
 
