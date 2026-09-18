@@ -2,7 +2,11 @@
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Strict viewport to prevent zooming and handle notches -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#030304">
     <title>OpenStore - Premium Audio</title>
     
     <!-- Tailwind CSS -->
@@ -36,14 +40,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     
     <style>
         :root {
             --app-bg: #030304;
+            --theme-color: #ffffff;
+            --theme-color-dim: rgba(255, 255, 255, 0.05);
+            --theme-color-light: rgba(255, 255, 255, 0.15);
+            --theme-color-glow: rgba(255, 255, 255, 0.3);
         }
 
-        /* Anti-Download & Selection */
+        /* Anti-Download & Strict Selection/Zoom Prevention */
         * {
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
@@ -58,11 +65,18 @@
             user-drag: none;
         }
 
+        /* Cross-device viewport fix */
         body {
+            height: 100dvh;
+            width: 100vw;
             background-color: var(--app-bg);
+            background-image: 
+                radial-gradient(circle at 50% -10%, var(--theme-color-light), transparent 70%),
+                radial-gradient(circle at 50% 110%, var(--theme-color-dim), transparent 60%);
             color: #e2e8f0;
             overflow-x: hidden;
-            transition: background-color 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            touch-action: pan-y; /* Allow vertical scroll, prevent zoom */
+            transition: background-color 1.5s cubic-bezier(0.4, 0, 0.2, 1), background-image 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* Initial Loader */
@@ -98,22 +112,24 @@
 
         /* Minimalist Glassmorphism */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.02);
+            background: var(--theme-color-dim);
             backdrop-filter: blur(40px);
             -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 1.5rem;
+            border: 1px solid var(--theme-color-light);
             position: relative;
             overflow: hidden;
+            transition: background 1s ease, border-color 1s ease, box-shadow 1s ease;
         }
 
         .glass-button {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .glass-button:active {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
             transform: scale(0.92);
         }
 
@@ -122,17 +138,17 @@
             -webkit-appearance: none;
             appearance: none;
             width: 100%;
-            height: 4px;
+            height: 5px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             outline: none;
-            background-image: linear-gradient(#ffffff, #ffffff);
+            background-image: linear-gradient(var(--theme-color), var(--theme-color));
             background-size: var(--progress, 0%) 100%;
             background-repeat: no-repeat;
             cursor: pointer;
-            transition: height 0.2s ease;
+            transition: height 0.2s ease, background-image 1s ease;
         }
-        input[type="range"]:hover { height: 6px; }
+        input[type="range"]:hover { height: 7px; }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -145,15 +161,18 @@
         }
         input[type="range"]:hover::-webkit-slider-thumb,
         input[type="range"]:active::-webkit-slider-thumb {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
         }
 
         /* Smooth Sheet Transition */
         #fullscreen-player {
-            background-color: var(--app-bg);
-            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease, background-color 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-            will-change: transform, background-color;
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(80px);
+            -webkit-backdrop-filter: blur(80px);
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease;
+            will-change: transform, opacity;
+            touch-action: none; /* Prevents native browser swipe-back/refresh */
         }
         #fullscreen-player.closed {
             transform: translateY(100%);
@@ -167,26 +186,41 @@
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
-        /* Image Hover Zoom */
-        .card-image-wrapper { overflow: hidden; border-radius: 1rem; }
+        /* Catalog Animations */
+        .card-image-wrapper { overflow: hidden; border-radius: 1.2rem; transition: all 0.4s ease; }
         .card-image-wrapper img { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
         .group:hover .card-image-wrapper img { transform: scale(1.05); }
         
-        /* Playing State Glow */
+        .catalog-item {
+            animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .is-playing-card {
-            border: 1px solid rgba(255,255,255,0.15);
+            border: 2px solid var(--theme-color);
+            box-shadow: 0 10px 30px var(--theme-color-dim);
             opacity: 1 !important;
+            transform: scale(0.98);
         }
         .not-playing-card {
-            opacity: 0.5;
-            transition: opacity 0.4s ease;
+            border: 2px solid transparent;
+            opacity: 0.6;
         }
         .group:hover .not-playing-card {
             opacity: 1;
         }
+
+        /* Ambient Cover Glow */
+        #full-cover-wrapper {
+            box-shadow: 0 20px 80px -10px var(--theme-color-glow);
+            transition: box-shadow 1.5s ease;
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden" oncontextmenu="return false;">
+<body class="flex flex-col overflow-hidden" oncontextmenu="return false;">
 
     <!-- Initial Loading Screen -->
     <div id="initial-loader">
@@ -197,7 +231,7 @@
             <span id="typewriter-text-2"></span><span class="cursor hidden" id="cursor-2"></span>
         </div>
         <div id="loading-msg" class="opacity-0 transition-opacity duration-1000 text-[10px] font-bold text-metal-400 mt-10 tracking-[0.2em] uppercase">
-            Wait while we load musics...
+            Connecting to OpenStore...
         </div>
     </div>
 
@@ -205,11 +239,11 @@
     <audio id="audio-engine" preload="auto" crossorigin="anonymous"></audio>
 
     <!-- Floating Notifications -->
-    <div id="toast-box" class="fixed top-6 right-6 z-[120] flex flex-col gap-3 pointer-events-none"></div>
+    <div id="toast-box" class="fixed top-24 right-6 z-[120] flex flex-col gap-3 pointer-events-none"></div>
 
-    <!-- Minimalist Header -->
-    <header class="fixed top-0 w-full z-30 h-[80px] flex items-center justify-between px-6 md:px-12 bg-black/10 backdrop-blur-3xl border-b border-white/[0.02]">
-        <div class="cursor-pointer group flex flex-col justify-center" onclick="handleLogoClick()">
+    <!-- Floating Pill Header -->
+    <header class="fixed top-4 left-4 right-4 md:left-12 md:right-12 z-30 h-[70px] rounded-3xl bg-black/30 backdrop-blur-3xl border border-white/10 shadow-2xl flex items-center justify-between px-6 transition-all duration-500">
+        <div class="cursor-pointer group flex flex-col justify-center" onclick="showCatalogView()">
             <span class="font-extrabold text-xl md:text-2xl text-gradient tracking-tight leading-none">
                 OPENSTORE
             </span>
@@ -217,31 +251,11 @@
                 Curated by TJ
             </span>
         </div>
-
-        <div class="hidden md:flex items-center relative w-96">
-            <i class="fa-solid fa-search absolute left-5 text-metal-400 text-sm"></i>
-            <input type="text" id="catalog-search" oninput="handleSearch(this.value)" placeholder="Search catalog..." 
-                class="w-full bg-white/5 border border-white/5 text-sm pl-12 pr-4 py-3 rounded-full placeholder:text-metal-400 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-white">
-        </div>
-
-        <div class="flex items-center gap-4">
-            <button id="nav-upload-btn" onclick="openUploadModal()" class="hidden bg-white text-black text-[11px] font-bold tracking-wide uppercase px-6 py-2.5 rounded-full items-center gap-2 hover:bg-gray-200 transition-colors">
-                <i class="fa-solid fa-arrow-up-from-bracket"></i>
-                <span>Publish</span>
-            </button>
-        </div>
     </header>
 
     <!-- Main Content Area -->
-    <main class="pt-[100px] pb-[140px] h-full overflow-y-auto px-6 md:px-12 max-w-[1800px] mx-auto w-full" id="main-scroll-view">
-        
-        <div class="md:hidden relative mb-8">
-            <i class="fa-solid fa-search absolute left-5 top-4 text-metal-400 text-sm"></i>
-            <input type="text" oninput="handleSearch(this.value)" placeholder="Search catalog..." 
-                class="w-full bg-white/5 border border-white/5 text-sm pl-12 pr-4 py-3.5 rounded-full focus:outline-none focus:border-white/20 transition-all text-white">
-        </div>
-
-        <div id="catalog-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10 pb-10 mt-4">
+    <main class="pt-[110px] pb-[160px] h-full overflow-y-auto px-6 md:px-12 max-w-[1800px] mx-auto w-full" id="main-scroll-view">
+        <div id="catalog-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10 mt-4">
             <!-- Items injected here -->
         </div>
 
@@ -250,16 +264,16 @@
                 <i class="fa-solid fa-compact-disc text-4xl text-metal-400"></i>
             </div>
             <h3 class="text-xl font-bold text-white tracking-tight mb-2">Nothing Here Yet</h3>
-            <p class="text-sm text-metal-400 max-w-sm mb-8 leading-relaxed">The catalog is currently empty. Waiting for TJ to drop some tracks.</p>
+            <p class="text-sm text-metal-400 max-w-sm mb-8 leading-relaxed">The catalog is currently empty.</p>
         </div>
     </main>
 
     <!-- FLOATING PILL MINI-PLAYER -->
-    <div class="fixed bottom-8 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
-        <div id="mini-player" class="glass-panel pointer-events-auto w-full max-w-3xl h-[76px] rounded-full px-3 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform duration-300" onclick="openFullscreenPlayer()">
+    <div class="fixed bottom-6 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
+        <div id="mini-player" class="glass-panel rounded-[2rem] pointer-events-auto w-full max-w-3xl h-[80px] px-3 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform duration-300 shadow-2xl" onclick="openFullscreenPlayer()">
             
-            <div class="flex items-center gap-4 w-1/3 min-w-[180px] overflow-hidden">
-                <div class="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border border-white/5">
+            <div class="flex items-center gap-4 w-2/3 overflow-hidden">
+                <div class="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border border-white/10 shadow-lg">
                     <img id="mini-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23121315'/%3E%3C/svg%3E" class="w-full h-full object-cover">
                 </div>
                 <div class="overflow-hidden">
@@ -268,51 +282,41 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-center gap-6 w-1/3" onclick="event.stopPropagation()">
-                <button onclick="playPrevTrack()" class="text-metal-400 hover:text-white transition active:scale-90">
-                    <i class="fa-solid fa-backward-fill text-lg"></i>
+            <div class="flex items-center justify-end w-1/3 pr-2" onclick="event.stopPropagation()">
+                <button onclick="togglePlayPause()" id="mini-play-btn" class="w-14 h-14 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-xl">
+                    <i class="fa-solid fa-play text-base ml-0.5" id="mini-play-icon"></i>
                 </button>
-                <button onclick="togglePlayPause()" id="mini-play-btn" class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition">
-                    <i class="fa-solid fa-play text-sm ml-0.5" id="mini-play-icon"></i>
-                </button>
-                <button onclick="playNextTrack()" class="text-metal-400 hover:text-white transition active:scale-90">
-                    <i class="fa-solid fa-forward-fill text-lg"></i>
-                </button>
-            </div>
-
-            <div class="flex items-center justify-end w-1/3 pr-6">
-                <!-- Empty space to balance flexbox -->
             </div>
         </div>
     </div>
 
-    <!-- FULL-SCREEN PLAYER -->
+    <!-- FULL-SCREEN PLAYER (Reels Style & Ambient) -->
     <div id="fullscreen-player" class="closed fixed inset-0 z-50 flex flex-col justify-between p-6 md:p-12 overflow-hidden">
-        <div class="absolute inset-0 bg-black/30 backdrop-blur-[60px] z-0 pointer-events-none"></div>
-
+        
         <div class="relative z-10 flex items-center justify-between w-full max-w-4xl mx-auto pt-6">
-            <button onclick="closeFullscreenPlayer()" class="w-12 h-12 rounded-full glass-button flex items-center justify-center text-white">
+            <button onclick="closeFullscreenPlayer()" class="w-12 h-12 rounded-full glass-button flex items-center justify-center text-white hover:bg-white/10 transition">
                 <i class="fa-solid fa-chevron-down text-lg"></i>
             </button>
             <div class="text-center flex flex-col items-center">
                 <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-metal-400">Playing from</span>
-                <span id="full-now-playing-genre" class="text-xs font-bold text-white tracking-widest mt-1 uppercase">OPENSTORE</span>
+                <span id="full-now-playing-genre" class="text-xs font-bold text-white tracking-widest mt-1 uppercase" style="color: var(--theme-color); text-shadow: 0 0 15px var(--theme-color-glow);">OPENSTORE</span>
             </div>
             <div class="w-12 h-12">
                 <!-- Empty space to balance header -->
             </div>
         </div>
 
-        <div class="relative z-10 flex flex-col items-center justify-center my-auto w-full max-w-md mx-auto">
-            <div class="relative aspect-square w-72 sm:w-80 md:w-[400px] rounded-[2rem] overflow-hidden shadow-2xl transition-transform duration-500 border border-white/5" id="full-cover-wrapper">
+        <!-- Cover Art Area (Swipeable) -->
+        <div class="relative z-10 flex flex-col items-center justify-center my-auto w-full max-w-md mx-auto flex-1" id="swipe-area">
+            <div class="relative aspect-square w-[70vw] max-w-[340px] sm:w-80 md:w-[400px] rounded-[2.5rem] overflow-hidden border border-white/10" id="full-cover-wrapper">
                 <img id="full-cover" crossorigin="anonymous" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23121315'/%3E%3C/svg%3E" 
                      class="w-full h-full object-cover">
             </div>
         </div>
 
-        <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col gap-8 mb-8">
+        <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col gap-8 mb-6">
             <div class="flex items-center justify-between px-4">
-                <div class="overflow-hidden pr-4">
+                <div class="overflow-hidden text-center w-full">
                     <h2 id="full-title" class="text-3xl md:text-4xl font-extrabold text-white tracking-tight truncate">Standby</h2>
                     <p id="full-artist" class="text-lg font-medium text-metal-400 truncate mt-1">Awaiting Input</p>
                 </div>
@@ -326,114 +330,19 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-center gap-10 px-4 pb-6">
-                <button onclick="toggleShuffle()" id="full-shuffle-btn" class="text-metal-400 hover:text-white transition">
-                    <i class="fa-solid fa-shuffle text-lg"></i>
-                </button>
-                <button onclick="playPrevTrack()" class="text-white hover:scale-110 active:scale-90 transition-transform">
-                    <i class="fa-solid fa-backward-fill text-4xl"></i>
-                </button>
-                <button onclick="togglePlayPause()" id="full-play-btn" class="w-24 h-24 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+            <!-- Ultra Minimalist Controls (Play/Pause Only) -->
+            <div class="flex items-center justify-center px-4 pb-8">
+                <button onclick="togglePlayPause()" id="full-play-btn" class="w-24 h-24 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform" style="box-shadow: 0 0 40px var(--theme-color-light);">
                     <i class="fa-solid fa-play text-3xl ml-2" id="full-play-icon"></i>
                 </button>
-                <button onclick="playNextTrack()" class="text-white hover:scale-110 active:scale-90 transition-transform">
-                    <i class="fa-solid fa-forward-fill text-4xl"></i>
-                </button>
-                <button onclick="toggleRepeat()" id="full-repeat-btn" class="text-metal-400 hover:text-white transition">
-                    <i class="fa-solid fa-repeat text-lg"></i>
-                </button>
             </div>
-        </div>
-    </div>
-
-    <!-- MODAL: UPLOAD STUDIO -->
-    <div id="upload-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-2xl hidden items-center justify-center p-4">
-        <div class="glass-panel max-w-2xl w-full p-8 relative overflow-y-auto max-h-[90vh]">
-            <button onclick="closeUploadModal()" class="absolute top-6 right-6 w-10 h-10 rounded-full glass-button flex items-center justify-center text-white">
-                <i class="fa-solid fa-xmark text-sm"></i>
-            </button>
-
-            <div class="mb-8">
-                <span class="text-2xl font-extrabold text-white tracking-tight">Studio Interface</span>
-                <p class="text-xs font-medium text-metal-400 mt-1">Upload and encode new audio to the global catalog.</p>
-            </div>
-
-            <form id="upload-form" class="space-y-6">
-                <div class="bg-white/5 border border-dashed border-white/20 hover:border-white/50 transition-colors rounded-2xl p-8 text-center relative">
-                    <i class="fa-solid fa-wave-square text-3xl text-metal-400 mb-4"></i>
-                    <p id="audio-filename" class="text-sm font-bold text-white">Select Audio Source (MP3/WAV)</p>
-                    <p id="audio-subtext" class="text-xs text-metal-400 mt-2">ID3 Metadata Auto-Extraction</p>
-                    <input type="file" id="audio-input" accept="audio/*" class="absolute inset-0 opacity-0 cursor-pointer">
-                </div>
-
-                <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-5">
-                    <div class="relative w-24 h-24 rounded-xl overflow-hidden bg-metal-900 group">
-                        <img id="upload-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23121315'/%3E%3C/svg%3E" class="w-full h-full object-cover">
-                        <label for="cover-input" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center cursor-pointer text-[10px] font-bold text-white uppercase tracking-wider text-center px-2">
-                            Replace
-                        </label>
-                        <input type="file" id="cover-input" accept="image/*" class="sr-only">
-                    </div>
-                    <div class="flex-1">
-                        <span class="text-xs font-bold text-white block mb-1">Cover Graphic</span>
-                        <p class="text-[11px] text-metal-400 leading-relaxed">Upload a custom image. System will automatically compress and optimize.</p>
-                        <label for="cover-input" class="inline-block mt-3 glass-button px-5 py-2 rounded-full text-[11px] font-bold uppercase tracking-wide cursor-pointer text-white">
-                            Browse Image
-                        </label>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase tracking-wide text-metal-400 mb-2">Track Title</label>
-                        <input type="text" id="track-name" required class="w-full bg-white/5 border border-white/10 text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-white/30 text-white">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase tracking-wide text-metal-400 mb-2">Artist</label>
-                        <input type="text" id="track-composer" required class="w-full bg-white/5 border border-white/10 text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-white/30 text-white">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase tracking-wide text-metal-400 mb-2">Genre</label>
-                        <select id="track-genre" class="w-full bg-white/5 border border-white/10 text-sm px-4 py-3 rounded-xl appearance-none text-white focus:outline-none focus:border-white/30">
-                            <option value="Electronic" class="bg-metal-900">Electronic</option>
-                            <option value="Lo-Fi" class="bg-metal-900">Lo-Fi</option>
-                            <option value="Hip-Hop" class="bg-metal-900">Hip-Hop</option>
-                            <option value="Ambient" class="bg-metal-900">Ambient</option>
-                            <option value="Acoustic" class="bg-metal-900">Acoustic</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold uppercase tracking-wide text-metal-400 mb-2">Release</label>
-                        <input type="text" id="track-album" placeholder="Single" class="w-full bg-white/5 border border-white/10 text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-white/30 text-white">
-                    </div>
-                </div>
-
-                <div id="upload-progress-box" class="hidden space-y-2 pt-2">
-                    <div class="flex justify-between text-[11px] font-bold uppercase tracking-wide text-metal-400">
-                        <span id="upload-status-text">Transmitting...</span>
-                        <span id="upload-percent">0%</span>
-                    </div>
-                    <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                        <div id="upload-progress-fill" class="bg-white h-full w-0 transition-all duration-200"></div>
-                    </div>
-                </div>
-
-                <button type="submit" id="upload-submit-btn" class="w-full bg-white text-black font-bold py-4 rounded-xl text-xs uppercase tracking-wide flex items-center justify-center gap-2 mt-4 hover:bg-gray-200 transition-colors">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span>Publish to Catalog</span>
-                </button>
-            </form>
         </div>
     </div>
 
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, getDocs, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, increment, query, where } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkGAiUg9-KQllgfBAb1T-Pwx1EoSzS-tY",
@@ -445,27 +354,29 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentUser = null;
-        let isComposer = false;
         let allTracks = [];
-        let displayTracks = [];
         let currentTrackIndex = -1;
         let activeTrack = null;
         let currentPlaySession = 0; 
 
-        let isShuffle = false;
-        let isRepeat = false;
-        let customCoverBase64 = null;
-        let selectedAudioFile = null;
-        let detectedDuration = 0;
-
         const audioCache = new Map();
         const audio = document.getElementById('audio-engine');
+        audio.loop = false; 
         const fullProgress = document.getElementById('full-progress');
         
+        // ==========================================
+        // AUTO-FULLSCREEN HELPER
+        // ==========================================
+        function requestAppFullscreen() {
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.warn("Fullscreen prevented by browser:", err);
+                });
+            }
+        }
+
         // ==========================================
         // DOLBY ATMOS / SPATIAL AUDIO ENGINE
         // ==========================================
@@ -519,7 +430,7 @@
         window.toast = (message, type = "info") => {
             const container = document.getElementById('toast-box');
             const el = document.createElement('div');
-            el.className = "px-6 py-3.5 rounded-xl glass-panel text-xs font-bold tracking-wide text-white flex items-center gap-3 transition-all duration-400 transform translate-y-4 opacity-0 shadow-2xl";
+            el.className = "px-6 py-3.5 rounded-2xl glass-panel text-xs font-bold tracking-wide text-white flex items-center gap-3 transition-all duration-400 transform translate-y-4 opacity-0 shadow-2xl";
             const icon = type === 'error' ? '<i class="fa-solid fa-triangle-exclamation text-red-400"></i>' : '<i class="fa-solid fa-check text-white"></i>';
             el.innerHTML = `${icon} <span>${message}</span>`;
             container.appendChild(el);
@@ -533,39 +444,8 @@
 
         window.showCatalogView = () => document.getElementById('main-scroll-view').scrollTo({ top: 0, behavior: 'smooth' });
 
-        let logoClicks = 0;
-        let logoClickTimer;
-        window.handleLogoClick = () => {
-            logoClicks++;
-            clearTimeout(logoClickTimer);
-            logoClickTimer = setTimeout(() => logoClicks = 0, 1500);
-            
-            if (logoClicks === 1) {
-                showCatalogView();
-            } else if (logoClicks === 5) {
-                isComposer = true;
-                document.getElementById('nav-upload-btn').classList.remove('hidden');
-                document.getElementById('nav-upload-btn').classList.add('flex');
-                toast("Welcome back, TJ. Studio unlocked.");
-                logoClicks = 0;
-            }
-        };
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                try { await signInAnonymously(auth); } 
-                catch (e) { console.error("Auth failed", e); }
-            } else {
-                currentUser = user;
-                if(isComposer) {
-                    document.getElementById('nav-upload-btn').classList.remove('hidden');
-                    document.getElementById('nav-upload-btn').classList.add('flex');
-                }
-            }
-        });
-
         // ==========================================
-        // DYNAMIC THEME EXTRACTION
+        // DYNAMIC THEME EXTRACTION (HYPER-AMBIENT)
         // ==========================================
         function applyThemeColor(imageUrl) {
             const img = new Image();
@@ -582,38 +462,61 @@
                         r += data[i]; g += data[i+1]; b += data[i+2];
                     }
                     const count = data.length / 4;
-                    document.documentElement.style.setProperty('--app-bg', `rgb(${Math.floor(r/count * 0.12)}, ${Math.floor(g/count * 0.12)}, ${Math.floor(b/count * 0.12)})`);
+                    
+                    // Heavy saturation boost for premium ambient glow
+                    const boost = 2.2; 
+                    const finalR = Math.min(255, Math.floor((r / count) * boost));
+                    const finalG = Math.min(255, Math.floor((g / count) * boost));
+                    const finalB = Math.min(255, Math.floor((b / count) * boost));
+
+                    document.documentElement.style.setProperty('--theme-color', `rgb(${finalR}, ${finalG}, ${finalB})`);
+                    document.documentElement.style.setProperty('--theme-color-dim', `rgba(${finalR}, ${finalG}, ${finalB}, 0.15)`);
+                    document.documentElement.style.setProperty('--theme-color-light', `rgba(${finalR}, ${finalG}, ${finalB}, 0.3)`);
+                    document.documentElement.style.setProperty('--theme-color-glow', `rgba(${finalR}, ${finalG}, ${finalB}, 0.4)`);
+                    document.documentElement.style.setProperty('--app-bg', `rgb(${Math.floor(finalR * 0.05)}, ${Math.floor(finalG * 0.05)}, ${Math.floor(finalB * 0.05)})`);
                 } catch(e) {
-                    document.documentElement.style.setProperty('--app-bg', '#030304');
+                    resetTheme();
                 }
             };
-            img.onerror = () => document.documentElement.style.setProperty('--app-bg', '#030304');
+            img.onerror = resetTheme;
             img.src = imageUrl;
         }
 
+        function resetTheme() {
+            document.documentElement.style.setProperty('--theme-color', '#ffffff');
+            document.documentElement.style.setProperty('--theme-color-dim', 'rgba(255, 255, 255, 0.05)');
+            document.documentElement.style.setProperty('--theme-color-light', 'rgba(255, 255, 255, 0.15)');
+            document.documentElement.style.setProperty('--theme-color-glow', 'rgba(255, 255, 255, 0.3)');
+            document.documentElement.style.setProperty('--app-bg', '#030304');
+        }
+
         // ==========================================
-        // REELS-STYLE GESTURES
+        // REELS-STYLE GESTURES (PERFECTED)
         // ==========================================
         const playerEl = document.getElementById('fullscreen-player');
         const coverWrapper = document.getElementById('full-cover-wrapper');
+        const swipeArea = document.getElementById('swipe-area');
+        
         let startX = 0, startY = 0, currentX = 0, currentY = 0;
         let isDragging = false;
+        let isSwipingRight = false;
+        let isSwipingVertical = false;
 
-        playerEl.addEventListener('touchstart', e => { 
-            // Ignore if touching a button or slider
+        swipeArea.addEventListener('touchstart', e => { 
             if(e.target.closest('button') || e.target.tagName.toLowerCase() === 'input') return;
             startX = e.touches[0].clientX; 
             startY = e.touches[0].clientY; 
             currentX = startX;
             currentY = startY;
             isDragging = true;
+            isSwipingRight = false;
+            isSwipingVertical = false;
             
-            // Disable transitions during drag for instant response
             coverWrapper.style.transition = 'none';
             playerEl.style.transition = 'none';
         }, {passive: true});
         
-        playerEl.addEventListener('touchmove', e => {
+        swipeArea.addEventListener('touchmove', e => {
             if(!isDragging) return;
             currentX = e.touches[0].clientX;
             currentY = e.touches[0].clientY;
@@ -621,199 +524,63 @@
             const diffX = currentX - startX;
             const diffY = currentY - startY;
 
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                // Horizontal Swipe (Right to close)
+            // Determine swipe direction lock
+            if (!isSwipingRight && !isSwipingVertical) {
+                if (Math.abs(diffX) > Math.abs(diffY) && diffX > 0) {
+                    isSwipingRight = true;
+                } else {
+                    isSwipingVertical = true;
+                }
+            }
+
+            if (isSwipingRight) {
+                // 1:1 Finger tracking for swipe right to close
                 if (diffX > 0) {
                     playerEl.style.transform = `translateX(${diffX}px)`;
+                    playerEl.style.opacity = 1 - (diffX / window.innerWidth);
                 }
-            } else {
-                // Vertical Swipe
-                if (diffY > 0 && currentTrackIndex === 0) {
-                    // Swipe down on first track -> close player
-                    playerEl.style.transform = `translateY(${diffY}px)`;
-                } else {
-                    // Swipe up/down to change track -> move cover art
-                    coverWrapper.style.transform = `translateY(${diffY * 0.4}px) scale(0.95)`;
-                }
+            } else if (isSwipingVertical) {
+                // Reels style vertical drag
+                coverWrapper.style.transform = `translateY(${diffY * 0.6}px) scale(0.95)`;
             }
         }, {passive: true});
         
-        playerEl.addEventListener('touchend', e => {
+        swipeArea.addEventListener('touchend', e => {
             if(!isDragging) return;
             isDragging = false;
             
             const diffX = currentX - startX;
             const diffY = currentY - startY;
 
-            // Restore transitions
-            coverWrapper.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1)';
-            playerEl.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease, background-color 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
-
-            // Reset transforms
-            playerEl.style.transform = ''; 
-            coverWrapper.style.transform = audio.paused ? 'scale(0.92)' : 'scale(1)';
-
-            // Determine action based on threshold
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > 100) {
-                    closeFullscreenPlayer();
-                }
-            } else {
-                if (diffY < -80) {
-                    playNextTrack();
-                } else if (diffY > 80) {
-                    if (currentTrackIndex === 0) {
+            if (isSwipingRight) {
+                if (diffX > 120) {
+                    // Complete the close animation
+                    playerEl.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    playerEl.style.transform = `translateX(100vw)`;
+                    playerEl.style.opacity = '0';
+                    setTimeout(() => {
                         closeFullscreenPlayer();
-                    } else {
-                        playPrevTrack();
-                    }
+                        playerEl.style.transform = '';
+                        playerEl.style.opacity = '';
+                    }, 300);
+                } else {
+                    // Snap back
+                    playerEl.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    playerEl.style.transform = '';
+                    playerEl.style.opacity = '';
                 }
-            }
-        });
-
-        // Secret TJ Delete Gesture (Double tap cover art)
-        coverWrapper.addEventListener('dblclick', () => {
-            if (isComposer) deleteCurrentSong();
-        });
-
-        // ==========================================
-        // UPLOAD LOGIC
-        // ==========================================
-        function processImageFile(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX = 600;
-                        let w = img.width, h = img.height;
-                        if (w > h) { if (w > MAX) { h = Math.round(h * (MAX / w)); w = MAX; } } 
-                        else { if (h > MAX) { w = Math.round(w * (MAX / h)); h = MAX; } }
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL('image/jpeg', 0.85));
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        document.getElementById('cover-input').addEventListener('change', async (e) => {
-            if (!e.target.files[0]) return;
-            customCoverBase64 = await processImageFile(e.target.files[0]);
-            document.getElementById('upload-cover-preview').src = customCoverBase64;
-            toast("Graphic Updated");
-        });
-
-        document.getElementById('audio-input').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            selectedAudioFile = file;
-
-            document.getElementById('audio-filename').innerText = file.name;
-            document.getElementById('audio-subtext').innerText = `${(file.size / (1024 * 1024)).toFixed(2)} MB • Analyzing...`;
-
-            const tempAudio = new Audio();
-            tempAudio.src = URL.createObjectURL(file);
-            tempAudio.onloadedmetadata = () => {
-                detectedDuration = Math.round(tempAudio.duration);
-                document.getElementById('audio-subtext').innerText = `${(file.size / (1024 * 1024)).toFixed(2)} MB • ${formatMinutes(detectedDuration)}`;
-            };
-
-            if (window.jsmediatags) {
-                window.jsmediatags.read(file, {
-                    onSuccess: (tag) => {
-                        const tags = tag.tags;
-                        document.getElementById('track-name').value = tags.title || file.name.replace(/\.[^/.]+$/, "");
-                        if (tags.artist) document.getElementById('track-composer').value = tags.artist;
-                        if (tags.album) document.getElementById('track-album').value = tags.album;
-
-                        if (tags.picture && !customCoverBase64) {
-                            let binary = '';
-                            const bytes = new Uint8Array(tags.picture.data);
-                            for (let i = 0; i < bytes.byteLength; i += 8192) {
-                                binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + 8192, bytes.byteLength)));
-                            }
-                            customCoverBase64 = `data:${tags.picture.format || 'image/jpeg'};base64,${btoa(binary)}`;
-                            document.getElementById('upload-cover-preview').src = customCoverBase64;
-                        }
-                    },
-                    onError: () => document.getElementById('track-name').value = file.name.replace(/\.[^/.]+$/, "")
-                });
-            }
-        });
-
-        window.openUploadModal = () => document.getElementById('upload-modal').classList.replace('hidden', 'flex');
-        window.closeUploadModal = () => document.getElementById('upload-modal').classList.replace('flex', 'hidden');
-
-        function sliceToBase64(blobSlice) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(blobSlice);
-            });
-        }
-
-        document.getElementById('upload-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!selectedAudioFile) return toast("Source required", "error");
-
-            const title = document.getElementById('track-name').value.trim();
-            const artist = document.getElementById('track-composer').value.trim();
-            const genre = document.getElementById('track-genre').value;
-            const album = document.getElementById('track-album').value.trim() || "Single";
-            const story = document.getElementById('track-story').value.trim();
-
-            const btn = document.getElementById('upload-submit-btn');
-            const progressBox = document.getElementById('upload-progress-box');
-            const progressFill = document.getElementById('upload-progress-fill');
-            const percentLabel = document.getElementById('upload-percent');
-            const statusLabel = document.getElementById('upload-status-text');
-
-            try {
-                btn.disabled = true;
-                progressBox.classList.remove('hidden');
-
-                const CHUNK_SIZE = 450 * 1024;
-                const totalChunks = Math.ceil(selectedAudioFile.size / CHUNK_SIZE);
-                const finalArtwork = customCoverBase64 || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80";
-
-                statusLabel.innerText = "Indexing...";
+            } else if (isSwipingVertical) {
+                playerEl.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease';
                 
-                const trackRef = await addDoc(collection(db, "apps"), {
-                    type: "audio_track", title, artist, genre, album, story,
-                    coverUrl: finalArtwork, duration: detectedDuration || 180,
-                    ownerId: currentUser.uid, isChunked: true,
-                    mimeType: selectedAudioFile.type || 'audio/mpeg',
-                    chunkCount: totalChunks, plays: 0,
-                    createdAt: serverTimestamp()
-                });
-
-                for (let i = 0; i < totalChunks; i++) {
-                    const start = i * CHUNK_SIZE;
-                    const slice = selectedAudioFile.slice(start, Math.min(start + CHUNK_SIZE, selectedAudioFile.size));
-                    await setDoc(doc(db, "apps", `${trackRef.id}_c_${i}`), {
-                        type: "audio_chunk", trackId: trackRef.id, index: i, data: await sliceToBase64(slice)
-                    });
-                    const pct = Math.round(((i + 1) / totalChunks) * 100);
-                    progressFill.style.width = `${pct}%`;
-                    percentLabel.innerText = `${pct}%`;
-                    statusLabel.innerText = `Transmitting ${i + 1}/${totalChunks}`;
+                if (diffY < -80) {
+                    playNextTrack(true);
+                } else if (diffY > 80) {
+                    playPrevTrack(true);
+                } else {
+                    // Snap back cover
+                    coverWrapper.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1)';
+                    coverWrapper.style.transform = audio.paused ? 'scale(0.92)' : 'scale(1)';
                 }
-
-                toast("Transmission Complete");
-                closeUploadModal();
-                document.getElementById('upload-form').reset();
-                selectedAudioFile = null; customCoverBase64 = null;
-                loadCatalogData();
-            } catch (err) {
-                toast("Failed: " + err.message, "error");
-            } finally {
-                btn.disabled = false;
-                progressBox.classList.add('hidden');
             }
         });
 
@@ -833,51 +600,44 @@
                 }
             };
 
-            // Slowed down typing animation
-            await typeText("OPEN", el1, 150);
-            await new Promise(r => setTimeout(r, 300));
+            await typeText("OPEN", el1, 100);
+            await new Promise(r => setTimeout(r, 150));
             
-            await typeText("STORE", el1, 150);
-            await new Promise(r => setTimeout(r, 400));
+            await typeText("STORE", el1, 100);
+            await new Promise(r => setTimeout(r, 200));
             
             c1.classList.add('hidden');
             c2.classList.remove('hidden');
             
-            await typeText("CURATED BY TJ.", el2, 100);
-            await new Promise(r => setTimeout(r, 400)); 
+            await typeText("CURATED BY TJ.", el2, 60);
+            await new Promise(r => setTimeout(r, 200)); 
 
-            // Show loading message
             document.getElementById('loading-msg').classList.remove('opacity-0');
-            await new Promise(r => setTimeout(r, 1500)); // Give user time to read it
+            await new Promise(r => setTimeout(r, 800)); 
         }
 
         async function loadCatalogData() {
-            const querySnap = await getDocs(collection(db, "apps"));
+            const q = query(collection(db, "apps"), where("type", "==", "audio_track"));
+            const querySnap = await getDocs(q);
+            
             allTracks = [];
             querySnap.forEach((snap) => {
                 const data = snap.data();
-                if (data.type === "audio_track" || data.isChunked) {
-                    data.id = snap.id;
-                    data.title = data.title || data.name || "Unknown";
-                    data.artist = data.artist || "Unknown";
-                    data.coverUrl = data.coverUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80";
-                    allTracks.push(data);
-                }
+                data.id = snap.id;
+                data.title = data.title || data.name || "Unknown";
+                data.artist = data.artist || "Unknown";
+                data.coverUrl = data.coverUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80";
+                allTracks.push(data);
             });
+            
             allTracks.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-            displayTracks = allTracks;
-            renderCatalog(displayTracks);
+            renderCatalog(allTracks);
         }
 
         async function initializeAppFlow() {
             try {
-                // Start loading data immediately
                 const catalogPromise = loadCatalogData();
-                
-                // Play animation independently
                 await playLoaderAnimation();
-
-                // Ensure data is loaded before dismissing loader
                 await catalogPromise;
             } catch (e) {
                 console.error("Init error", e);
@@ -890,12 +650,6 @@
         }
 
         initializeAppFlow();
-
-        window.handleSearch = (query) => {
-            const q = query.toLowerCase().trim();
-            displayTracks = q ? allTracks.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)) : allTracks;
-            renderCatalog(displayTracks);
-        };
 
         function renderCatalog(tracks) {
             const container = document.getElementById('catalog-container');
@@ -911,31 +665,65 @@
             tracks.forEach((track, index) => {
                 const isPlaying = activeTrack && activeTrack.id === track.id && !audio.paused;
                 const card = document.createElement('div');
-                card.className = "group flex flex-col cursor-pointer";
+                card.className = `group flex flex-col cursor-pointer catalog-item`;
+                card.dataset.id = track.id;
+                card.dataset.index = index;
+                card.style.animationDelay = `${index * 0.04}s`;
 
                 card.innerHTML = `
-                    <div class="relative aspect-square w-full mb-3 card-image-wrapper shadow-lg shadow-black/40 ${isPlaying ? 'is-playing-card' : 'not-playing-card'}">
+                    <div class="relative aspect-square w-full mb-3 card-image-wrapper ${isPlaying ? 'is-playing-card' : 'not-playing-card'}">
                         <img src="${track.coverUrl}" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <button class="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
-                                <i class="fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'} text-lg ml-1 text-white"></i>
+                                <i class="fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'} text-lg ml-1 text-white play-icon"></i>
                             </button>
                         </div>
                     </div>
                     <h4 class="text-sm font-bold text-white truncate tracking-tight">${track.title}</h4>
                     <p class="text-xs font-medium text-metal-400 truncate mt-0.5">${track.artist}</p>
                 `;
-                card.onclick = () => playTrack(index);
+                card.onclick = () => {
+                    requestAppFullscreen();
+                    playTrack(index);
+                };
                 container.appendChild(card);
+            });
+        }
+
+        function updateCatalogUI() {
+            document.querySelectorAll('.catalog-item').forEach(card => {
+                const trackId = card.dataset.id;
+                const isPlaying = activeTrack && activeTrack.id === trackId && !audio.paused;
+                const imgWrapper = card.querySelector('.card-image-wrapper');
+                const icon = card.querySelector('.play-icon');
+
+                if (isPlaying) {
+                    imgWrapper.classList.add('is-playing-card');
+                    imgWrapper.classList.remove('not-playing-card');
+                    icon.className = 'fa-solid fa-pause text-lg ml-1 text-white play-icon';
+                } else {
+                    imgWrapper.classList.remove('is-playing-card');
+                    imgWrapper.classList.add('not-playing-card');
+                    icon.className = 'fa-solid fa-play text-lg ml-1 text-white play-icon';
+                }
             });
         }
 
         // ==========================================
         // HIGH-PERFORMANCE STREAMING ENGINE
         // ==========================================
-        window.playTrack = async (index) => {
-            if (index < 0 || index >= displayTracks.length) return;
-            if (currentTrackIndex === index && activeTrack) return togglePlayPause();
+        window.playTrack = async (index, forceReplay = false) => {
+            if (index < 0 || index >= allTracks.length) return;
+            
+            if (!forceReplay && currentTrackIndex === index && activeTrack) {
+                if (audio.ended) {
+                    audio.currentTime = 0;
+                    audio.play();
+                    setPlaybackState(true);
+                    return;
+                }
+                return togglePlayPause();
+            }
 
             const sessionId = ++currentPlaySession;
 
@@ -943,7 +731,7 @@
             if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 
             currentTrackIndex = index;
-            activeTrack = displayTracks[index];
+            activeTrack = allTracks[index];
             
             audio.pause();
             setPlaybackState(false);
@@ -1003,8 +791,8 @@
                 });
                 navigator.mediaSession.setActionHandler('play', togglePlayPause);
                 navigator.mediaSession.setActionHandler('pause', togglePlayPause);
-                navigator.mediaSession.setActionHandler('previoustrack', playPrevTrack);
-                navigator.mediaSession.setActionHandler('nexttrack', playNextTrack);
+                navigator.mediaSession.setActionHandler('previoustrack', () => playPrevTrack(true));
+                navigator.mediaSession.setActionHandler('nexttrack', () => playNextTrack(true));
             }
         }
 
@@ -1019,11 +807,11 @@
             document.getElementById('full-now-playing-genre').innerText = track.genre || "OPENSTORE";
             
             applyThemeColor(track.coverUrl);
-            renderCatalog(displayTracks);
+            updateCatalogUI();
         }
 
         window.togglePlayPause = () => {
-            if (!activeTrack && displayTracks.length > 0) return playTrack(0);
+            if (!activeTrack && allTracks.length > 0) return playTrack(0);
             if (!activeTrack) return;
             
             if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -1037,38 +825,78 @@
             const coverWrapper = document.getElementById('full-cover-wrapper');
 
             if (playing) {
-                miniIcon.className = "fa-solid fa-pause text-sm";
+                miniIcon.className = "fa-solid fa-pause text-base";
                 fullIcon.className = "fa-solid fa-pause text-3xl";
                 coverWrapper.style.transform = "scale(1)";
             } else {
-                miniIcon.className = "fa-solid fa-play text-sm ml-0.5";
+                miniIcon.className = "fa-solid fa-play text-base ml-0.5";
                 fullIcon.className = "fa-solid fa-play text-3xl ml-2";
                 coverWrapper.style.transform = "scale(0.92)";
             }
-            renderCatalog(displayTracks);
+            updateCatalogUI();
         }
 
-        window.playNextTrack = () => {
-            if (!displayTracks.length) return;
-            currentTrackIndex = isShuffle ? Math.floor(Math.random() * displayTracks.length) : (currentTrackIndex + 1) % displayTracks.length;
-            playTrack(currentTrackIndex);
+        // ==========================================
+        // PERFECTED SEQUENCED ANIMATIONS
+        // ==========================================
+        window.playNextTrack = (animate = false) => {
+            if (!allTracks.length) return;
+            const nextIndex = (currentTrackIndex + 1) % allTracks.length;
+            
+            if (animate) {
+                // 1. Animate current cover UP and OUT
+                coverWrapper.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                coverWrapper.style.transform = 'translateY(-100vh) scale(0.8)';
+                
+                setTimeout(() => {
+                    // 2. Change track (updates DOM instantly while hidden)
+                    playTrack(nextIndex, true);
+                    
+                    // 3. Instantly move wrapper to BOTTOM
+                    coverWrapper.style.transition = 'none';
+                    coverWrapper.style.transform = 'translateY(100vh) scale(0.8)';
+                    
+                    // 4. Animate wrapper IN (UP to center)
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            coverWrapper.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1)';
+                            coverWrapper.style.transform = 'translateY(0) scale(1)';
+                        });
+                    });
+                }, 300);
+            } else {
+                playTrack(nextIndex, true);
+            }
         };
 
-        window.playPrevTrack = () => {
-            if (!displayTracks.length) return;
-            currentTrackIndex = (currentTrackIndex - 1 + displayTracks.length) % displayTracks.length;
-            playTrack(currentTrackIndex);
-        };
-
-        window.toggleShuffle = () => {
-            isShuffle = !isShuffle;
-            document.getElementById('full-shuffle-btn').classList.toggle('text-white', isShuffle);
-        };
-
-        window.toggleRepeat = () => {
-            isRepeat = !isRepeat;
-            audio.loop = isRepeat;
-            document.getElementById('full-repeat-btn').classList.toggle('text-white', isRepeat);
+        window.playPrevTrack = (animate = false) => {
+            if (!allTracks.length) return;
+            const prevIndex = (currentTrackIndex - 1 + allTracks.length) % allTracks.length;
+            
+            if (animate) {
+                // 1. Animate current cover DOWN and OUT
+                coverWrapper.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                coverWrapper.style.transform = 'translateY(100vh) scale(0.8)';
+                
+                setTimeout(() => {
+                    // 2. Change track
+                    playTrack(prevIndex, true);
+                    
+                    // 3. Instantly move wrapper to TOP
+                    coverWrapper.style.transition = 'none';
+                    coverWrapper.style.transform = 'translateY(-100vh) scale(0.8)';
+                    
+                    // 4. Animate wrapper IN (DOWN to center)
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            coverWrapper.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1)';
+                            coverWrapper.style.transform = 'translateY(0) scale(1)';
+                        });
+                    });
+                }, 300);
+            } else {
+                playTrack(prevIndex, true);
+            }
         };
 
         let playCountLogged = false;
@@ -1109,10 +937,10 @@
             }
         });
 
-        // NO AUTO-ADVANCE: Just stop playing when the song ends
+        // AUTO-ADVANCE: Instantly triggers the next track and animation
         audio.addEventListener('ended', () => { 
             playCountLogged = false; 
-            setPlaybackState(false);
+            playNextTrack(true);
         });
 
         function formatMinutes(seconds) {
@@ -1121,18 +949,13 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        window.openFullscreenPlayer = () => document.getElementById('fullscreen-player').classList.remove('closed');
-        window.closeFullscreenPlayer = () => document.getElementById('fullscreen-player').classList.add('closed');
-
-        window.deleteCurrentSong = async () => {
-            if (!isComposer || !activeTrack) return;
-            if (!confirm(`Delete "${activeTrack.title}" from the catalog?`)) return;
-            try {
-                await deleteDoc(doc(db, "apps", activeTrack.id));
-                audio.pause(); setPlaybackState(false);
-                closeFullscreenPlayer();
-                toast("Track Deleted"); loadCatalogData();
-            } catch (e) { toast("Delete Failed", "error"); }
+        window.openFullscreenPlayer = () => {
+            requestAppFullscreen();
+            document.getElementById('fullscreen-player').classList.remove('closed');
+        };
+        
+        window.closeFullscreenPlayer = () => {
+            document.getElementById('fullscreen-player').classList.add('closed');
         };
 
         window.addEventListener('keydown', (e) => {
