@@ -14,13 +14,13 @@
                 extend: {
                     colors: {
                         metal: {
-                            950: '#030304', // Deepest void
-                            900: '#08090a', // Base background
-                            800: '#121315', // Elevated surfaces
-                            700: '#1f2125', // Borders
-                            400: '#8b949e', // Muted text
-                            200: '#e2e8f0', // Primary text
-                            100: '#ffffff', // Highlights
+                            950: '#030304',
+                            900: '#08090a',
+                            800: '#121315',
+                            700: '#1f2125',
+                            400: '#8b949e',
+                            200: '#e2e8f0',
+                            100: '#ffffff',
                         }
                     },
                     fontFamily: {
@@ -39,6 +39,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     
     <style>
+        :root {
+            --app-bg: #030304;
+        }
+
         /* Anti-Download & Selection */
         * {
             -webkit-tap-highlight-color: transparent;
@@ -49,18 +53,16 @@
         }
 
         img, audio {
-            pointer-events: none; /* Prevents long-press save */
+            pointer-events: none;
             -webkit-user-drag: none;
-            -khtml-user-drag: none;
-            -moz-user-drag: none;
-            -o-user-drag: none;
             user-drag: none;
         }
 
         body {
-            background-color: #030304;
+            background-color: var(--app-bg);
             color: #e2e8f0;
             overflow-x: hidden;
+            transition: background-color 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* Initial Loader */
@@ -94,41 +96,25 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* Hyper-Realistic VisionOS Glassmorphism */
+        /* Minimalist Glassmorphism */
         .glass-panel {
-            background: linear-gradient(145deg, rgba(20, 21, 24, 0.6) 0%, rgba(10, 11, 13, 0.8) 100%);
-            backdrop-filter: blur(40px) saturate(180%);
-            -webkit-backdrop-filter: blur(40px) saturate(180%);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            border-left: 1px solid rgba(255, 255, 255, 0.08);
-            border-right: 1px solid rgba(255, 255, 255, 0.03);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.8);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 1.5rem;
             position: relative;
             overflow: hidden;
         }
-        /* Subtle Noise Texture */
-        .glass-panel::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.04"/%3E%3C/svg%3E');
-            pointer-events: none;
-            z-index: -1;
-        }
 
         .glass-button {
-            background: rgba(255, 255, 255, 0.05);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.5);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .glass-button:active {
             background: rgba(255, 255, 255, 0.1);
             transform: scale(0.92);
-            border-top: 1px solid transparent;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
         }
 
         /* Apple-Style Progressive Slider */
@@ -136,8 +122,8 @@
             -webkit-appearance: none;
             appearance: none;
             width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.15);
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             outline: none;
             background-image: linear-gradient(#ffffff, #ffffff);
@@ -146,7 +132,7 @@
             cursor: pointer;
             transition: height 0.2s ease;
         }
-        input[type="range"]:hover { height: 8px; }
+        input[type="range"]:hover { height: 6px; }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -159,42 +145,15 @@
         }
         input[type="range"]:hover::-webkit-slider-thumb,
         input[type="range"]:active::-webkit-slider-thumb {
-            width: 14px;
-            height: 14px;
-        }
-
-        /* Ambient Backdrop */
-        .ambient-backdrop {
-            position: absolute;
-            inset: -100px;
-            background-size: cover;
-            background-position: center;
-            filter: blur(90px) saturate(1.8) brightness(0.35);
-            transform: scale(1.2);
-            z-index: 0;
-            transition: background-image 1s ease-in-out;
-        }
-
-        /* Equalizer Animation */
-        .eq-bar {
-            width: 3px;
-            background: #ffffff;
-            border-radius: 3px;
-            animation: bounceHeight 0.6s ease-in-out infinite alternate;
-        }
-        .eq-bar:nth-child(1) { height: 8px; animation-delay: 0.1s; }
-        .eq-bar:nth-child(2) { height: 16px; animation-delay: 0.3s; }
-        .eq-bar:nth-child(3) { height: 10px; animation-delay: 0.2s; }
-        .eq-bar:nth-child(4) { height: 14px; animation-delay: 0.4s; }
-
-        @keyframes bounceHeight {
-            0% { transform: scaleY(0.3); }
-            100% { transform: scaleY(1.1); }
+            width: 12px;
+            height: 12px;
         }
 
         /* Smooth Sheet Transition */
         #fullscreen-player {
-            transition: transform 0.6s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.5s ease;
+            background-color: var(--app-bg);
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease, background-color 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform, background-color;
         }
         #fullscreen-player.closed {
             transform: translateY(100%);
@@ -205,18 +164,25 @@
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
         /* Image Hover Zoom */
         .card-image-wrapper { overflow: hidden; border-radius: 1rem; }
         .card-image-wrapper img { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
-        .group:hover .card-image-wrapper img { transform: scale(1.08); }
+        .group:hover .card-image-wrapper img { transform: scale(1.05); }
         
         /* Playing State Glow */
         .is-playing-card {
-            box-shadow: 0 0 30px rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.15);
+            opacity: 1 !important;
+        }
+        .not-playing-card {
+            opacity: 0.5;
+            transition: opacity 0.4s ease;
+        }
+        .group:hover .not-playing-card {
+            opacity: 1;
         }
     </style>
 </head>
@@ -230,6 +196,9 @@
         <div class="text-metal-400 font-bold text-sm md:text-base tracking-[0.4em] uppercase mt-6 flex items-center h-6">
             <span id="typewriter-text-2"></span><span class="cursor hidden" id="cursor-2"></span>
         </div>
+        <div id="loading-msg" class="opacity-0 transition-opacity duration-1000 text-[10px] font-bold text-metal-400 mt-10 tracking-[0.2em] uppercase">
+            Wait while we load musics...
+        </div>
     </div>
 
     <!-- Global Audio Element -->
@@ -239,8 +208,7 @@
     <div id="toast-box" class="fixed top-6 right-6 z-[120] flex flex-col gap-3 pointer-events-none"></div>
 
     <!-- Minimalist Header -->
-    <header class="fixed top-0 w-full z-30 h-[80px] flex items-center justify-between px-6 md:px-12 bg-metal-950/70 backdrop-blur-2xl border-b border-white/[0.04]">
-        <!-- Logo (Secret TJ Trigger) -->
+    <header class="fixed top-0 w-full z-30 h-[80px] flex items-center justify-between px-6 md:px-12 bg-black/10 backdrop-blur-3xl border-b border-white/[0.02]">
         <div class="cursor-pointer group flex flex-col justify-center" onclick="handleLogoClick()">
             <span class="font-extrabold text-xl md:text-2xl text-gradient tracking-tight leading-none">
                 OPENSTORE
@@ -250,16 +218,14 @@
             </span>
         </div>
 
-        <!-- Center Search -->
         <div class="hidden md:flex items-center relative w-96">
             <i class="fa-solid fa-search absolute left-5 text-metal-400 text-sm"></i>
             <input type="text" id="catalog-search" oninput="handleSearch(this.value)" placeholder="Search catalog..." 
-                class="w-full bg-white/5 border border-white/10 text-sm pl-12 pr-4 py-3 rounded-full placeholder:text-metal-400 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-white shadow-inner">
+                class="w-full bg-white/5 border border-white/5 text-sm pl-12 pr-4 py-3 rounded-full placeholder:text-metal-400 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all text-white">
         </div>
 
-        <!-- Actions (Upload hidden by default) -->
         <div class="flex items-center gap-4">
-            <button id="nav-upload-btn" onclick="openUploadModal()" class="hidden bg-white text-black text-[11px] font-bold tracking-wide uppercase px-6 py-2.5 rounded-full items-center gap-2 hover:bg-gray-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+            <button id="nav-upload-btn" onclick="openUploadModal()" class="hidden bg-white text-black text-[11px] font-bold tracking-wide uppercase px-6 py-2.5 rounded-full items-center gap-2 hover:bg-gray-200 transition-colors">
                 <i class="fa-solid fa-arrow-up-from-bracket"></i>
                 <span>Publish</span>
             </button>
@@ -269,19 +235,16 @@
     <!-- Main Content Area -->
     <main class="pt-[100px] pb-[140px] h-full overflow-y-auto px-6 md:px-12 max-w-[1800px] mx-auto w-full" id="main-scroll-view">
         
-        <!-- Mobile Search -->
         <div class="md:hidden relative mb-8">
             <i class="fa-solid fa-search absolute left-5 top-4 text-metal-400 text-sm"></i>
             <input type="text" oninput="handleSearch(this.value)" placeholder="Search catalog..." 
-                class="w-full bg-white/5 border border-white/10 text-sm pl-12 pr-4 py-3.5 rounded-full focus:outline-none focus:border-white/30 transition-all text-white shadow-inner">
+                class="w-full bg-white/5 border border-white/5 text-sm pl-12 pr-4 py-3.5 rounded-full focus:outline-none focus:border-white/20 transition-all text-white">
         </div>
 
-        <!-- Grid -->
         <div id="catalog-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10 pb-10 mt-4">
             <!-- Items injected here -->
         </div>
 
-        <!-- Empty State -->
         <div id="empty-state" class="hidden flex-col items-center justify-center text-center py-32 px-4">
             <div class="w-24 h-24 rounded-full glass-panel flex items-center justify-center mb-6">
                 <i class="fa-solid fa-compact-disc text-4xl text-metal-400"></i>
@@ -295,9 +258,8 @@
     <div class="fixed bottom-8 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
         <div id="mini-player" class="glass-panel pointer-events-auto w-full max-w-3xl h-[76px] rounded-full px-3 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform duration-300" onclick="openFullscreenPlayer()">
             
-            <!-- Track Info -->
             <div class="flex items-center gap-4 w-1/3 min-w-[180px] overflow-hidden">
-                <div class="relative w-14 h-14 rounded-full overflow-hidden shadow-lg flex-shrink-0 border border-white/10">
+                <div class="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0 border border-white/5">
                     <img id="mini-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23121315'/%3E%3C/svg%3E" class="w-full h-full object-cover">
                 </div>
                 <div class="overflow-hidden">
@@ -306,39 +268,29 @@
                 </div>
             </div>
 
-            <!-- Controls -->
             <div class="flex items-center justify-center gap-6 w-1/3" onclick="event.stopPropagation()">
-                <button onclick="playPrevTrack()" class="text-metal-200 hover:text-white transition active:scale-90">
+                <button onclick="playPrevTrack()" class="text-metal-400 hover:text-white transition active:scale-90">
                     <i class="fa-solid fa-backward-fill text-lg"></i>
                 </button>
-                <button onclick="togglePlayPause()" id="mini-play-btn" class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                <button onclick="togglePlayPause()" id="mini-play-btn" class="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition">
                     <i class="fa-solid fa-play text-sm ml-0.5" id="mini-play-icon"></i>
                 </button>
-                <button onclick="playNextTrack()" class="text-metal-200 hover:text-white transition active:scale-90">
+                <button onclick="playNextTrack()" class="text-metal-400 hover:text-white transition active:scale-90">
                     <i class="fa-solid fa-forward-fill text-lg"></i>
                 </button>
             </div>
 
-            <!-- Right Actions -->
-            <div class="flex items-center justify-end gap-5 w-1/3 pr-4" onclick="event.stopPropagation()">
-                <div id="mini-eq" class="hidden items-end gap-[3px] h-4">
-                    <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
-                </div>
-                <button id="mini-like-btn" onclick="toggleLikeTrack()" class="text-metal-200 hover:text-white transition active:scale-75">
-                    <i class="fa-regular fa-heart text-lg" id="mini-like-icon"></i>
-                </button>
+            <div class="flex items-center justify-end w-1/3 pr-6">
+                <!-- Empty space to balance flexbox -->
             </div>
         </div>
     </div>
 
     <!-- FULL-SCREEN PLAYER -->
-    <div id="fullscreen-player" class="closed fixed inset-0 z-50 flex flex-col justify-between p-6 md:p-12 overflow-hidden bg-metal-950">
-        <!-- Ambient Background -->
-        <div id="player-ambient-bg" class="ambient-backdrop"></div>
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-[60px] z-0"></div>
+    <div id="fullscreen-player" class="closed fixed inset-0 z-50 flex flex-col justify-between p-6 md:p-12 overflow-hidden">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-[60px] z-0 pointer-events-none"></div>
 
-        <!-- Header -->
-        <div class="relative z-10 flex items-center justify-between w-full max-w-4xl mx-auto pt-4">
+        <div class="relative z-10 flex items-center justify-between w-full max-w-4xl mx-auto pt-6">
             <button onclick="closeFullscreenPlayer()" class="w-12 h-12 rounded-full glass-button flex items-center justify-center text-white">
                 <i class="fa-solid fa-chevron-down text-lg"></i>
             </button>
@@ -346,38 +298,26 @@
                 <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-metal-400">Playing from</span>
                 <span id="full-now-playing-genre" class="text-xs font-bold text-white tracking-widest mt-1 uppercase">OPENSTORE</span>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="shareTrack()" class="w-12 h-12 rounded-full glass-button flex items-center justify-center text-white">
-                    <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
-                </button>
-                <button onclick="toggleLyricsModal()" class="w-12 h-12 rounded-full glass-button flex items-center justify-center text-white">
-                    <i class="fa-solid fa-ellipsis text-lg"></i>
-                </button>
+            <div class="w-12 h-12">
+                <!-- Empty space to balance header -->
             </div>
         </div>
 
-        <!-- Center Art -->
         <div class="relative z-10 flex flex-col items-center justify-center my-auto w-full max-w-md mx-auto">
-            <div class="relative aspect-square w-72 sm:w-80 md:w-[400px] rounded-[2rem] overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.8)] transition-transform duration-500 border border-white/10" id="full-cover-wrapper">
-                <img id="full-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23121315'/%3E%3C/svg%3E" 
+            <div class="relative aspect-square w-72 sm:w-80 md:w-[400px] rounded-[2rem] overflow-hidden shadow-2xl transition-transform duration-500 border border-white/5" id="full-cover-wrapper">
+                <img id="full-cover" crossorigin="anonymous" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23121315'/%3E%3C/svg%3E" 
                      class="w-full h-full object-cover">
             </div>
         </div>
 
-        <!-- Controls -->
         <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col gap-8 mb-8">
-            <!-- Info -->
             <div class="flex items-center justify-between px-4">
                 <div class="overflow-hidden pr-4">
                     <h2 id="full-title" class="text-3xl md:text-4xl font-extrabold text-white tracking-tight truncate">Standby</h2>
                     <p id="full-artist" class="text-lg font-medium text-metal-400 truncate mt-1">Awaiting Input</p>
                 </div>
-                <button onclick="toggleLikeTrack()" class="w-14 h-14 rounded-full glass-button flex items-center justify-center text-white active:scale-90 transition-transform">
-                    <i class="fa-regular fa-heart text-2xl" id="full-like-icon"></i>
-                </button>
             </div>
 
-            <!-- Scrubber -->
             <div class="w-full space-y-3 px-4">
                 <input type="range" id="full-progress" min="0" max="100" value="0" style="--progress: 0%;">
                 <div class="flex items-center justify-between text-xs font-medium text-metal-400">
@@ -386,7 +326,6 @@
                 </div>
             </div>
 
-            <!-- Playback -->
             <div class="flex items-center justify-center gap-10 px-4 pb-6">
                 <button onclick="toggleShuffle()" id="full-shuffle-btn" class="text-metal-400 hover:text-white transition">
                     <i class="fa-solid fa-shuffle text-lg"></i>
@@ -394,7 +333,7 @@
                 <button onclick="playPrevTrack()" class="text-white hover:scale-110 active:scale-90 transition-transform">
                     <i class="fa-solid fa-backward-fill text-4xl"></i>
                 </button>
-                <button onclick="togglePlayPause()" id="full-play-btn" class="w-24 h-24 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+                <button onclick="togglePlayPause()" id="full-play-btn" class="w-24 h-24 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
                     <i class="fa-solid fa-play text-3xl ml-2" id="full-play-icon"></i>
                 </button>
                 <button onclick="playNextTrack()" class="text-white hover:scale-110 active:scale-90 transition-transform">
@@ -407,9 +346,9 @@
         </div>
     </div>
 
-    <!-- MODAL: UPLOAD STUDIO (Hidden for normal users) -->
+    <!-- MODAL: UPLOAD STUDIO -->
     <div id="upload-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-2xl hidden items-center justify-center p-4">
-        <div class="glass-panel max-w-2xl w-full rounded-[2rem] p-8 relative overflow-y-auto max-h-[90vh]">
+        <div class="glass-panel max-w-2xl w-full p-8 relative overflow-y-auto max-h-[90vh]">
             <button onclick="closeUploadModal()" class="absolute top-6 right-6 w-10 h-10 rounded-full glass-button flex items-center justify-center text-white">
                 <i class="fa-solid fa-xmark text-sm"></i>
             </button>
@@ -420,7 +359,6 @@
             </div>
 
             <form id="upload-form" class="space-y-6">
-                <!-- Audio Drop -->
                 <div class="bg-white/5 border border-dashed border-white/20 hover:border-white/50 transition-colors rounded-2xl p-8 text-center relative">
                     <i class="fa-solid fa-wave-square text-3xl text-metal-400 mb-4"></i>
                     <p id="audio-filename" class="text-sm font-bold text-white">Select Audio Source (MP3/WAV)</p>
@@ -428,7 +366,6 @@
                     <input type="file" id="audio-input" accept="audio/*" class="absolute inset-0 opacity-0 cursor-pointer">
                 </div>
 
-                <!-- Cover Art -->
                 <div class="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-5">
                     <div class="relative w-24 h-24 rounded-xl overflow-hidden bg-metal-900 group">
                         <img id="upload-cover-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23121315'/%3E%3C/svg%3E" class="w-full h-full object-cover">
@@ -446,7 +383,6 @@
                     </div>
                 </div>
 
-                <!-- Meta -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[11px] font-bold uppercase tracking-wide text-metal-400 mb-2">Track Title</label>
@@ -475,12 +411,6 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wide text-metal-400 mb-2">Notes / Lyrics</label>
-                    <textarea id="track-story" rows="2" class="w-full bg-white/5 border border-white/10 text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-white/30 text-white"></textarea>
-                </div>
-
-                <!-- Progress -->
                 <div id="upload-progress-box" class="hidden space-y-2 pt-2">
                     <div class="flex justify-between text-[11px] font-bold uppercase tracking-wide text-metal-400">
                         <span id="upload-status-text">Transmitting...</span>
@@ -499,32 +429,11 @@
         </div>
     </div>
 
-    <!-- MODAL: DETAILS / LYRICS -->
-    <div id="lyrics-modal" class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-2xl hidden items-center justify-center p-6">
-        <div class="glass-panel max-w-md w-full rounded-[2rem] p-8 relative">
-            <button onclick="toggleLyricsModal()" class="absolute top-6 right-6 w-10 h-10 rounded-full glass-button flex items-center justify-center text-white">
-                <i class="fa-solid fa-xmark text-sm"></i>
-            </button>
-            <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-metal-400 mb-1">Track Info</h4>
-            <h3 id="lyrics-title" class="text-2xl font-bold text-white mb-6 tracking-tight">Details</h3>
-            <div id="lyrics-body" class="max-h-72 overflow-y-auto text-sm text-metal-200 whitespace-pre-wrap leading-relaxed font-medium">
-                No data available.
-            </div>
-            
-            <!-- Delete Button (Only visible to TJ) -->
-            <div id="track-owner-actions" class="hidden mt-8 pt-6 border-t border-white/10 flex justify-end">
-                <button onclick="deleteCurrentSong()" class="text-xs font-bold uppercase tracking-wide text-red-400 hover:text-red-300 px-5 py-2.5 rounded-full bg-red-500/10 border border-red-500/20 transition-colors">
-                    <i class="fa-solid fa-trash mr-2"></i> Delete Track
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, getDocs, serverTimestamp, arrayUnion, arrayRemove, increment } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, getDocs, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCkGAiUg9-KQllgfBAb1T-Pwx1EoSzS-tY",
@@ -545,6 +454,7 @@
         let displayTracks = [];
         let currentTrackIndex = -1;
         let activeTrack = null;
+        let currentPlaySession = 0; 
 
         let isShuffle = false;
         let isRepeat = false;
@@ -623,7 +533,6 @@
 
         window.showCatalogView = () => document.getElementById('main-scroll-view').scrollTo({ top: 0, behavior: 'smooth' });
 
-        // Secret TJ Unlock Logic
         let logoClicks = 0;
         let logoClickTimer;
         window.handleLogoClick = () => {
@@ -639,11 +548,9 @@
                 document.getElementById('nav-upload-btn').classList.add('flex');
                 toast("Welcome back, TJ. Studio unlocked.");
                 logoClicks = 0;
-                if (activeTrack) updatePlayerDisplays(activeTrack); // Refresh UI to show delete button
             }
         };
 
-        // Frictionless Auto-Login
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 try { await signInAnonymously(auth); } 
@@ -657,6 +564,121 @@
             }
         });
 
+        // ==========================================
+        // DYNAMIC THEME EXTRACTION
+        // ==========================================
+        function applyThemeColor(imageUrl) {
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64; canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 64, 64);
+                    const data = ctx.getImageData(0, 0, 64, 64).data;
+                    let r = 0, g = 0, b = 0;
+                    for (let i = 0; i < data.length; i += 4) {
+                        r += data[i]; g += data[i+1]; b += data[i+2];
+                    }
+                    const count = data.length / 4;
+                    document.documentElement.style.setProperty('--app-bg', `rgb(${Math.floor(r/count * 0.12)}, ${Math.floor(g/count * 0.12)}, ${Math.floor(b/count * 0.12)})`);
+                } catch(e) {
+                    document.documentElement.style.setProperty('--app-bg', '#030304');
+                }
+            };
+            img.onerror = () => document.documentElement.style.setProperty('--app-bg', '#030304');
+            img.src = imageUrl;
+        }
+
+        // ==========================================
+        // REELS-STYLE GESTURES
+        // ==========================================
+        const playerEl = document.getElementById('fullscreen-player');
+        const coverWrapper = document.getElementById('full-cover-wrapper');
+        let startX = 0, startY = 0, currentX = 0, currentY = 0;
+        let isDragging = false;
+
+        playerEl.addEventListener('touchstart', e => { 
+            // Ignore if touching a button or slider
+            if(e.target.closest('button') || e.target.tagName.toLowerCase() === 'input') return;
+            startX = e.touches[0].clientX; 
+            startY = e.touches[0].clientY; 
+            currentX = startX;
+            currentY = startY;
+            isDragging = true;
+            
+            // Disable transitions during drag for instant response
+            coverWrapper.style.transition = 'none';
+            playerEl.style.transition = 'none';
+        }, {passive: true});
+        
+        playerEl.addEventListener('touchmove', e => {
+            if(!isDragging) return;
+            currentX = e.touches[0].clientX;
+            currentY = e.touches[0].clientY;
+            
+            const diffX = currentX - startX;
+            const diffY = currentY - startY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Horizontal Swipe (Right to close)
+                if (diffX > 0) {
+                    playerEl.style.transform = `translateX(${diffX}px)`;
+                }
+            } else {
+                // Vertical Swipe
+                if (diffY > 0 && currentTrackIndex === 0) {
+                    // Swipe down on first track -> close player
+                    playerEl.style.transform = `translateY(${diffY}px)`;
+                } else {
+                    // Swipe up/down to change track -> move cover art
+                    coverWrapper.style.transform = `translateY(${diffY * 0.4}px) scale(0.95)`;
+                }
+            }
+        }, {passive: true});
+        
+        playerEl.addEventListener('touchend', e => {
+            if(!isDragging) return;
+            isDragging = false;
+            
+            const diffX = currentX - startX;
+            const diffY = currentY - startY;
+
+            // Restore transitions
+            coverWrapper.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1)';
+            playerEl.style.transition = 'transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.4s ease, background-color 1.5s cubic-bezier(0.4, 0, 0.2, 1)';
+
+            // Reset transforms
+            playerEl.style.transform = ''; 
+            coverWrapper.style.transform = audio.paused ? 'scale(0.92)' : 'scale(1)';
+
+            // Determine action based on threshold
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 100) {
+                    closeFullscreenPlayer();
+                }
+            } else {
+                if (diffY < -80) {
+                    playNextTrack();
+                } else if (diffY > 80) {
+                    if (currentTrackIndex === 0) {
+                        closeFullscreenPlayer();
+                    } else {
+                        playPrevTrack();
+                    }
+                }
+            }
+        });
+
+        // Secret TJ Delete Gesture (Double tap cover art)
+        coverWrapper.addEventListener('dblclick', () => {
+            if (isComposer) deleteCurrentSong();
+        });
+
+        // ==========================================
+        // UPLOAD LOGIC
+        // ==========================================
         function processImageFile(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -766,7 +788,7 @@
                     coverUrl: finalArtwork, duration: detectedDuration || 180,
                     ownerId: currentUser.uid, isChunked: true,
                     mimeType: selectedAudioFile.type || 'audio/mpeg',
-                    chunkCount: totalChunks, plays: 0, likes: [],
+                    chunkCount: totalChunks, plays: 0,
                     createdAt: serverTimestamp()
                 });
 
@@ -799,27 +821,34 @@
         // INITIALIZATION & LOADER ANIMATION
         // ==========================================
         async function playLoaderAnimation() {
-            const text1 = "OPEN.";
-            const text2 = "BY TJ.";
             const el1 = document.getElementById('typewriter-text-1');
             const el2 = document.getElementById('typewriter-text-2');
             const c1 = document.getElementById('cursor-1');
             const c2 = document.getElementById('cursor-2');
 
-            for (let i = 0; i < text1.length; i++) {
-                el1.textContent += text1[i];
-                await new Promise(r => setTimeout(r, 150)); 
-            }
+            const typeText = async (text, el, delay) => {
+                for (let char of text) {
+                    el.textContent += char;
+                    await new Promise(r => setTimeout(r, delay));
+                }
+            };
+
+            // Slowed down typing animation
+            await typeText("OPEN", el1, 150);
+            await new Promise(r => setTimeout(r, 300));
+            
+            await typeText("STORE", el1, 150);
+            await new Promise(r => setTimeout(r, 400));
             
             c1.classList.add('hidden');
             c2.classList.remove('hidden');
             
-            for (let i = 0; i < text2.length; i++) {
-                el2.textContent += text2[i];
-                await new Promise(r => setTimeout(r, 100)); 
-            }
-            
-            await new Promise(r => setTimeout(r, 600)); 
+            await typeText("CURATED BY TJ.", el2, 100);
+            await new Promise(r => setTimeout(r, 400)); 
+
+            // Show loading message
+            document.getElementById('loading-msg').classList.remove('opacity-0');
+            await new Promise(r => setTimeout(r, 1500)); // Give user time to read it
         }
 
         async function loadCatalogData() {
@@ -842,17 +871,21 @@
 
         async function initializeAppFlow() {
             try {
-                await Promise.all([
-                    loadCatalogData(),
-                    playLoaderAnimation()
-                ]);
+                // Start loading data immediately
+                const catalogPromise = loadCatalogData();
+                
+                // Play animation independently
+                await playLoaderAnimation();
+
+                // Ensure data is loaded before dismissing loader
+                await catalogPromise;
             } catch (e) {
                 console.error("Init error", e);
             } finally {
                 const loader = document.getElementById('initial-loader');
                 loader.style.transform = 'translateY(-100%)';
                 loader.style.opacity = '0';
-                setTimeout(() => loader.remove(), 1000);
+                setTimeout(() => loader.remove(), 900);
             }
         }
 
@@ -881,17 +914,13 @@
                 card.className = "group flex flex-col cursor-pointer";
 
                 card.innerHTML = `
-                    <div class="relative aspect-square w-full mb-3 card-image-wrapper shadow-lg shadow-black/40 ${isPlaying ? 'is-playing-card' : ''}">
+                    <div class="relative aspect-square w-full mb-3 card-image-wrapper shadow-lg shadow-black/40 ${isPlaying ? 'is-playing-card' : 'not-playing-card'}">
                         <img src="${track.coverUrl}" class="w-full h-full object-cover">
                         <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <button class="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
                                 <i class="fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'} text-lg ml-1 text-white"></i>
                             </button>
                         </div>
-                        ${isPlaying ? `
-                        <div class="absolute bottom-3 right-3 flex items-end gap-[2px] h-3">
-                            <div class="eq-bar w-1 bg-white"></div><div class="eq-bar w-1 bg-white"></div><div class="eq-bar w-1 bg-white"></div>
-                        </div>` : ''}
                     </div>
                     <h4 class="text-sm font-bold text-white truncate tracking-tight">${track.title}</h4>
                     <p class="text-xs font-medium text-metal-400 truncate mt-0.5">${track.artist}</p>
@@ -908,11 +937,17 @@
             if (index < 0 || index >= displayTracks.length) return;
             if (currentTrackIndex === index && activeTrack) return togglePlayPause();
 
+            const sessionId = ++currentPlaySession;
+
             initSpatialAudio();
             if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
 
             currentTrackIndex = index;
             activeTrack = displayTracks[index];
+            
+            audio.pause();
+            setPlaybackState(false);
+            
             updatePlayerDisplays(activeTrack);
             updateMediaSession(activeTrack);
 
@@ -920,7 +955,7 @@
                 if (audioCache.has(activeTrack.id)) {
                     audio.src = audioCache.get(activeTrack.id);
                 } else {
-                    toast(`Buffering Spatial Audio...`);
+                    toast(`Buffering...`);
                     
                     const chunkQueries = [];
                     for (let i = 0; i < activeTrack.chunkCount; i++) {
@@ -928,7 +963,8 @@
                     }
                     
                     const chunkSnaps = await Promise.all(chunkQueries);
-                    
+                    if (currentPlaySession !== sessionId) return; 
+
                     const blobPromises = chunkSnaps.map(async (snap) => {
                         if (!snap.exists()) throw new Error("Missing segment");
                         const b64 = snap.data().data;
@@ -937,17 +973,23 @@
                     });
                     
                     const blobs = await Promise.all(blobPromises);
+                    if (currentPlaySession !== sessionId) return; 
+
                     const finalBlob = new Blob(blobs, { type: activeTrack.mimeType || 'audio/mpeg' });
                     const blobUrl = URL.createObjectURL(finalBlob);
                     
                     audioCache.set(activeTrack.id, blobUrl);
                     audio.src = blobUrl;
                 }
+                
+                if (currentPlaySession !== sessionId) return;
                 await audio.play();
                 setPlaybackState(true);
             } catch (err) {
-                toast("Stream Error", "error");
-                setPlaybackState(false);
+                if (currentPlaySession === sessionId) {
+                    toast("Stream Error", "error");
+                    setPlaybackState(false);
+                }
             }
         };
 
@@ -975,22 +1017,8 @@
             document.getElementById('full-artist').innerText = track.artist;
             document.getElementById('full-cover').src = track.coverUrl;
             document.getElementById('full-now-playing-genre').innerText = track.genre || "OPENSTORE";
-            document.getElementById('player-ambient-bg').style.backgroundImage = `url('${track.coverUrl}')`;
-
-            document.getElementById('lyrics-title').innerText = `${track.title}`;
-            document.getElementById('lyrics-body').innerText = track.story || "No metadata available.";
-
-            // ONLY TJ CAN SEE DELETE BUTTON
-            const ownerActions = document.getElementById('track-owner-actions');
-            if (isComposer) {
-                ownerActions.classList.remove('hidden');
-            } else {
-                ownerActions.classList.add('hidden');
-            }
-
-            const isLiked = currentUser && track.likes && track.likes.includes(currentUser.uid);
-            document.getElementById('mini-like-icon').className = isLiked ? "fa-solid fa-heart text-white" : "fa-regular fa-heart";
-            document.getElementById('full-like-icon').className = isLiked ? "fa-solid fa-heart text-white" : "fa-regular fa-heart";
+            
+            applyThemeColor(track.coverUrl);
             renderCatalog(displayTracks);
         }
 
@@ -1006,18 +1034,15 @@
         function setPlaybackState(playing) {
             const miniIcon = document.getElementById('mini-play-icon');
             const fullIcon = document.getElementById('full-play-icon');
-            const miniEq = document.getElementById('mini-eq');
             const coverWrapper = document.getElementById('full-cover-wrapper');
 
             if (playing) {
                 miniIcon.className = "fa-solid fa-pause text-sm";
                 fullIcon.className = "fa-solid fa-pause text-3xl";
-                miniEq.classList.replace('hidden', 'flex');
                 coverWrapper.style.transform = "scale(1)";
             } else {
                 miniIcon.className = "fa-solid fa-play text-sm ml-0.5";
                 fullIcon.className = "fa-solid fa-play text-3xl ml-2";
-                miniEq.classList.replace('flex', 'hidden');
                 coverWrapper.style.transform = "scale(0.92)";
             }
             renderCatalog(displayTracks);
@@ -1084,7 +1109,11 @@
             }
         });
 
-        audio.addEventListener('ended', () => { playCountLogged = false; if (!isRepeat) playNextTrack(); });
+        // NO AUTO-ADVANCE: Just stop playing when the song ends
+        audio.addEventListener('ended', () => { 
+            playCountLogged = false; 
+            setPlaybackState(false);
+        });
 
         function formatMinutes(seconds) {
             if (isNaN(seconds)) return "0:00";
@@ -1094,13 +1123,6 @@
 
         window.openFullscreenPlayer = () => document.getElementById('fullscreen-player').classList.remove('closed');
         window.closeFullscreenPlayer = () => document.getElementById('fullscreen-player').classList.add('closed');
-        window.toggleLyricsModal = () => document.getElementById('lyrics-modal').classList.toggle('hidden') ? document.getElementById('lyrics-modal').classList.remove('flex') : document.getElementById('lyrics-modal').classList.add('flex');
-
-        window.shareTrack = () => {
-            if(!activeTrack) return;
-            navigator.clipboard.writeText(`Listen to ${activeTrack.title} by ${activeTrack.artist} on OpenStore!`);
-            toast("Link copied to clipboard");
-        };
 
         window.deleteCurrentSong = async () => {
             if (!isComposer || !activeTrack) return;
@@ -1108,27 +1130,9 @@
             try {
                 await deleteDoc(doc(db, "apps", activeTrack.id));
                 audio.pause(); setPlaybackState(false);
-                toggleLyricsModal(); closeFullscreenPlayer();
+                closeFullscreenPlayer();
                 toast("Track Deleted"); loadCatalogData();
             } catch (e) { toast("Delete Failed", "error"); }
-        };
-
-        window.toggleLikeTrack = async () => {
-            if (!currentUser) return;
-            if (!activeTrack) return;
-            const isLiked = activeTrack.likes && activeTrack.likes.includes(currentUser.uid);
-            const trackRef = doc(db, "apps", activeTrack.id);
-            try {
-                if (isLiked) {
-                    await updateDoc(trackRef, { likes: arrayRemove(currentUser.uid) });
-                    activeTrack.likes = activeTrack.likes.filter(id => id !== currentUser.uid);
-                } else {
-                    await updateDoc(trackRef, { likes: arrayUnion(currentUser.uid) });
-                    if (!activeTrack.likes) activeTrack.likes = [];
-                    activeTrack.likes.push(currentUser.uid);
-                }
-                updatePlayerDisplays(activeTrack);
-            } catch (e) {}
         };
 
         window.addEventListener('keydown', (e) => {
